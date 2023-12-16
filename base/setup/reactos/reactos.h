@@ -132,6 +132,7 @@ typedef struct _SETUPDATA
     /* General */
     HINSTANCE hInstance;
     BOOL bUnattend;
+    DWORD dwSetupType; // From HKLM\SYSTEM\Setup:SetupType registry value.
 
     HFONT hTitleFont;
     HFONT hBoldFont;
