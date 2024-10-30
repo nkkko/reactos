@@ -51,6 +51,8 @@
 #define ShowDlgItem(hDlg, nID, nCmdShow)    \
     ShowWindow(GetDlgItem((hDlg), (nID)), (nCmdShow))
 
+// Property Sheet string IDs
+#define IDS_CLOSE   4160 // 0x1040
 /* These are public names and values determined from MFC, and compatible with Windows */
 // Property Sheet control id's (determined with Spy++)
 #define IDC_TAB_CONTROL                 0x3020
@@ -132,7 +134,7 @@ typedef struct _SETUPDATA
     /* General */
     HINSTANCE hInstance;
     BOOL bUnattend;
-    DWORD dwSetupType; // From HKLM\SYSTEM\Setup:SetupType registry value.
+    BOOL bMustReboot;
 
     HFONT hTitleFont;
     HFONT hBoldFont;
