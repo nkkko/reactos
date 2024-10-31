@@ -134,6 +134,7 @@ typedef struct _SETUPDATA
     BOOL bUnattend;
 
     HFONT hTitleFont;
+    HFONT hBoldFont;
 
     HANDLE hInstallThread;
     HANDLE hHaltInstallEvent;

@@ -80,29 +80,50 @@ CenterWindow(HWND hWnd)
                  SWP_NOSIZE);
 }
 
+/**
+ * @brief
+ * Create a bold font derived from the provided font.
+ **/
 static HFONT
-CreateTitleFont(VOID)
+CreateBoldFont(
+    _In_opt_ HFONT hOrigFont,
+    _In_opt_ INT PointSize)
 {
-    NONCLIENTMETRICS ncm;
-    LOGFONT LogFont;
-    HDC hdc;
-    INT FontSize;
-    HFONT hFont;
+    LOGFONTW lf = {0};
 
-    ncm.cbSize = sizeof(NONCLIENTMETRICS);
-    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, 0, &ncm, 0);
+    if (hOrigFont)
+    {
+        GetObjectW(hOrigFont, sizeof(lf), &lf);
+    }
+    else
+    {
+        NONCLIENTMETRICSW ncm;
+        ncm.cbSize = sizeof(ncm);
+        SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, 0, &ncm, 0);
+        lf = ncm.lfMessageFont;
+    }
 
-    LogFont = ncm.lfMessageFont;
-    LogFont.lfWeight = FW_BOLD;
-    _tcscpy(LogFont.lfFaceName, _T("MS Shell Dlg"));
+    /* Make the font bold, keeping the other attributes */
+    lf.lfWeight = FW_BOLD;
 
-    hdc = GetDC(NULL);
-    FontSize = 12;
-    LogFont.lfHeight = 0 - GetDeviceCaps (hdc, LOGPIXELSY) * FontSize / 72;
-    hFont = CreateFontIndirect(&LogFont);
-    ReleaseDC(NULL, hdc);
+    /* Determine the font height (logical units) if necessary */
+    if (PointSize)
+    {
+        HDC hdc = GetDC(NULL);
+        lf.lfHeight = -MulDiv(PointSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+        // lf.lfWidth = 0;
+        ReleaseDC(NULL, hdc);
+    }
 
-    return hFont;
+    return CreateFontIndirect(&lf);
+}
+
+static inline HFONT
+CreateTitleFont(
+    _In_opt_ HFONT hOrigFont)
+{
+    /* Title font is 12pt bold */
+    return CreateBoldFont(hOrigFont, 12);
 }
 
 INT
@@ -314,6 +335,17 @@ StartDlgProc(
                                (WPARAM)pSetupData->hTitleFont,
                                (LPARAM)TRUE);
 
+            //
+            // TEMPTEMP: Set the ReactOS-Alpha information in bold.
+            // TODO: Remove once we reach 0.5 :)
+            //
+            SendDlgItemMessage(hwndDlg, IDC_WARNTEXT1,
+                               WM_SETFONT, (WPARAM)pSetupData->hBoldFont, (LPARAM)TRUE);
+            SendDlgItemMessage(hwndDlg, IDC_WARNTEXT2,
+                               WM_SETFONT, (WPARAM)pSetupData->hBoldFont, (LPARAM)TRUE);
+            SendDlgItemMessage(hwndDlg, IDC_WARNTEXT3,
+                               WM_SETFONT, (WPARAM)pSetupData->hBoldFont, (LPARAM)TRUE);
+
             /* Center the wizard window */
             CenterWindow(GetParent(hwndDlg));
             break;
@@ -326,8 +358,21 @@ StartDlgProc(
             switch (lpnm->code)
             {
                 case PSN_SETACTIVE:
+                {
+                    /* Only "Next" and "Cancel" for the first page and hide "Back" */
                     PropSheet_SetWizButtons(GetParent(hwndDlg), PSWIZB_NEXT);
+                    // PropSheet_ShowWizButtons(GetParent(hwndDlg), 0, PSWIZB_BACK);
+                    ShowDlgItem(GetParent(hwndDlg), ID_WIZBACK, SW_HIDE);
                     break;
+                }
+
+                case PSN_KILLACTIVE:
+                {
+                    /* Show "Back" button */
+                    // PropSheet_ShowWizButtons(GetParent(hwndDlg), PSWIZB_BACK, PSWIZB_BACK);
+                    ShowDlgItem(GetParent(hwndDlg), ID_WIZBACK, SW_SHOW);
+                    break;
+                }
 
                 default:
                     break;
@@ -2867,8 +2912,9 @@ _tWinMain(HINSTANCE hInst,
     // RegisterTreeListClass(hInst);
     TreeListRegister(hInst);
 
-    /* Create title font */
-    SetupData.hTitleFont = CreateTitleFont();
+    /* Create the title and bold fonts */
+    SetupData.hTitleFont = CreateTitleFont(NULL);
+    SetupData.hBoldFont  = CreateBoldFont(NULL, 0);
 
     if (!SetupData.bUnattend)
     {
@@ -2979,8 +3025,10 @@ _tWinMain(HINSTANCE hInst,
     CloseHandle(SetupData.hHaltInstallEvent);
     SetupData.hHaltInstallEvent = NULL;
 
+    if (SetupData.hBoldFont)
+        DeleteFont(SetupData.hBoldFont);
     if (SetupData.hTitleFont)
-        DeleteObject(SetupData.hTitleFont);
+        DeleteFont(SetupData.hTitleFont);
 
     /* Unregister the TreeList control */
     // UnregisterTreeListClass(hInst);
