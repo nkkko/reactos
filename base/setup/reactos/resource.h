@@ -47,15 +47,8 @@
 #define IDC_PARTMOREOPTS     2047
 
 #define IDD_SUMMARYPAGE      2050
-#define IDC_INSTALLTYPE      2051
-#define IDC_INSTALLSOURCE    2052
-#define IDC_ARCHITECTURE     2053
-// #define IDC_COMPUTER         2031
-// #define IDC_DISPLAY          2032
-// #define IDC_KEYBOARD         2033
-#define IDC_DESTDRIVE        2054
-// #define IDC_PATH             2071
-#define IDC_CONFIRM_INSTALL  2055
+#define IDC_EDIT_SUMMARY     2051
+#define IDC_CONFIRM_INSTALL  2052
 
 #define IDD_PROCESSPAGE      2060
 #define IDC_ACTIVITY         2061
@@ -120,6 +113,15 @@
 #define IDS_BOOTLOADER_SYSTEM       5122    // For non-MBR disks
 #define IDS_BOOTLOADER_MBRVBR       5123    // For MBR disks only
 #define IDS_BOOTLOADER_VBRONLY      5124    // ""
+
+#define IDS_INSTALLTYPE      2051
+#define IDS_INSTALLSOURCE    2052
+#define IDS_ARCHITECTURE     2053
+#define IDS_COMPUTER         2031
+#define IDS_DISPLAY          2032
+#define IDS_KEYBOARD         2033
+#define IDS_DESTDRIVE        2054
+#define IDS_PATH             2081
 
 
 /* Progress Strings */

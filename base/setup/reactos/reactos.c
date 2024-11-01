@@ -1055,6 +1055,18 @@ DeviceDlgProc(
     return FALSE;
 }
 
+void
+AppendTextToEditCtrl(
+    _In_ HWND hWndEdit,
+    _In_ PCTSTR pszText)
+{
+   int nLength = Edit_GetTextLength(hWndEdit);
+   // Optional: Save original selection with Edit_GetSel()
+   Edit_SetSel(hWndEdit, nLength, nLength);
+   Edit_ReplaceSel(hWndEdit, pszText);
+   // Optional: Restore original selection with Edit_SetSel()
+}
+
 static INT_PTR CALLBACK
 SummaryDlgProc(
     IN HWND hwndDlg,
@@ -1076,6 +1088,10 @@ SummaryDlgProc(
             /* Save pointer to the global setup data */
             pSetupData = (PSETUPDATA)((LPPROPSHEETPAGE)lParam)->lParam;
             SetWindowLongPtrW(hwndDlg, GWLP_USERDATA, (DWORD_PTR)pSetupData);
+
+            /* Set the new font */
+            SendDlgItemMessage(hwndDlg, IDC_CONFIRM_INSTALL,
+                               WM_SETFONT, (WPARAM)pSetupData->hBoldFont, (LPARAM)TRUE);
             break;
         }
 
@@ -1100,54 +1116,128 @@ SummaryDlgProc(
             {
                 case PSN_SETACTIVE:
                 {
+                    HWND hEditSummary;
                     WCHAR CurrentItemText[256];
+                    WCHAR szText[256];
 
                     ASSERT(InstallPartition);
 
                     /* Show the current selected settings */
 
+                    hEditSummary = GetDlgItem(hwndDlg, IDC_EDIT_SUMMARY);
+                    SetWindowText(hEditSummary, NULL); // L"";
+                    SendMessageW(hEditSummary, EM_EMPTYUNDOBUFFER, 0, 0);
+
+////////
+                    LoadStringW(pSetupData->hInstance, IDS_INSTALLTYPE,
+                                szText, _countof(szText));
+                    StringCchPrintfW(CurrentItemText, _countof(CurrentItemText),
+                                     L"%s\r\n\t", szText);
+                    AppendTextToEditCtrl(hEditSummary, CurrentItemText);
+
                     // FIXME! Localize
                     if (pSetupData->RepairUpdateFlag)
                     {
-                        StringCchPrintfW(CurrentItemText, ARRAYSIZE(CurrentItemText),
+                        StringCchPrintfW(szText, _countof(szText),
                                          L"Upgrading/Repairing \"%s\" from \"%s\"",
                                          pSetupData->CurrentInstallation->InstallationName,
                                          pSetupData->CurrentInstallation->VendorName);
                     }
                     else
                     {
-                        StringCchCopyW(CurrentItemText, ARRAYSIZE(CurrentItemText),
+                        StringCchCopyW(szText, _countof(szText),
                                        L"New ReactOS installation");
                     }
-                    SetDlgItemTextW(hwndDlg, IDC_INSTALLTYPE, CurrentItemText);
+                    StringCchPrintfW(CurrentItemText, _countof(CurrentItemText),
+                                     L"%s\r\n\r\n", szText);
+                    AppendTextToEditCtrl(hEditSummary, CurrentItemText);
+////////
 
-                    SetDlgItemTextW(hwndDlg, IDC_INSTALLSOURCE, L"n/a");
-                    SetDlgItemTextW(hwndDlg, IDC_ARCHITECTURE, L"n/a");
+////////
+                    LoadStringW(pSetupData->hInstance, IDS_INSTALLSOURCE,
+                                szText, _countof(szText));
+                    StringCchPrintfW(CurrentItemText, _countof(CurrentItemText),
+                                     L"%s\r\n\t", szText);
+                    AppendTextToEditCtrl(hEditSummary, CurrentItemText);
+
+                    StringCchPrintfW(CurrentItemText, _countof(CurrentItemText),
+                                     L"%s\r\n\r\n", L"n/a");
+                    AppendTextToEditCtrl(hEditSummary, CurrentItemText);
+////////
+
+////////
+                    LoadStringW(pSetupData->hInstance, IDS_ARCHITECTURE,
+                                szText, _countof(szText));
+                    StringCchPrintfW(CurrentItemText, _countof(CurrentItemText),
+                                     L"%s\r\n\t", szText);
+                    AppendTextToEditCtrl(hEditSummary, CurrentItemText);
+
+                    StringCchPrintfW(CurrentItemText, _countof(CurrentItemText),
+                                     L"%s\r\n\r\n", L"n/a");
+                    AppendTextToEditCtrl(hEditSummary, CurrentItemText);
+////////
+
+////////
+                    LoadStringW(pSetupData->hInstance, IDS_COMPUTER,
+                                szText, _countof(szText));
+                    StringCchPrintfW(CurrentItemText, _countof(CurrentItemText),
+                                     L"%s\r\n\t", szText);
+                    AppendTextToEditCtrl(hEditSummary, CurrentItemText);
 
                     GetSettingDescription(GetCurrentListEntry(pSetupData->USetupData.ComputerList),
-                                          CurrentItemText,
-                                          ARRAYSIZE(CurrentItemText));
-                    SetDlgItemTextW(hwndDlg, IDC_COMPUTER, CurrentItemText);
+                                          szText, _countof(szText));
+
+                    StringCchPrintfW(CurrentItemText, _countof(CurrentItemText),
+                                     L"%s\r\n\r\n", szText);
+                    AppendTextToEditCtrl(hEditSummary, CurrentItemText);
+////////
+
+////////
+                    LoadStringW(pSetupData->hInstance, IDS_DISPLAY,
+                                szText, _countof(szText));
+                    StringCchPrintfW(CurrentItemText, _countof(CurrentItemText),
+                                     L"%s\r\n\t", szText);
+                    AppendTextToEditCtrl(hEditSummary, CurrentItemText);
 
                     GetSettingDescription(GetCurrentListEntry(pSetupData->USetupData.DisplayList),
-                                          CurrentItemText,
-                                          ARRAYSIZE(CurrentItemText));
-                    SetDlgItemTextW(hwndDlg, IDC_DISPLAY, CurrentItemText);
+                                          szText, _countof(szText));
+
+                    StringCchPrintfW(CurrentItemText, _countof(CurrentItemText),
+                                     L"%s\r\n\r\n", szText);
+                    AppendTextToEditCtrl(hEditSummary, CurrentItemText);
+////////
+
+////////
+                    LoadStringW(pSetupData->hInstance, IDS_KEYBOARD,
+                                szText, _countof(szText));
+                    StringCchPrintfW(CurrentItemText, _countof(CurrentItemText),
+                                     L"%s\r\n\t", szText);
+                    AppendTextToEditCtrl(hEditSummary, CurrentItemText);
 
                     GetSettingDescription(GetCurrentListEntry(pSetupData->USetupData.KeyboardList),
-                                          CurrentItemText,
-                                          ARRAYSIZE(CurrentItemText));
-                    SetDlgItemTextW(hwndDlg, IDC_KEYBOARD, CurrentItemText);
+                                          szText, _countof(szText));
+
+                    StringCchPrintfW(CurrentItemText, _countof(CurrentItemText),
+                                     L"%s\r\n\r\n", szText);
+                    AppendTextToEditCtrl(hEditSummary, CurrentItemText);
+////////
+
+////////
+                    LoadStringW(pSetupData->hInstance, IDS_DESTDRIVE,
+                                szText, _countof(szText));
+                    StringCchPrintfW(CurrentItemText, _countof(CurrentItemText),
+                                     L"%s\r\n\t", szText);
+                    AppendTextToEditCtrl(hEditSummary, CurrentItemText);
 
                     if (InstallVolume->Info.DriveLetter)
                     {
 #if 0
-                        StringCchPrintfW(CurrentItemText, ARRAYSIZE(CurrentItemText),
+                        StringCchPrintfW(szText, _countof(szText),
                                          L"%c: \x2014 %wZ",
                                          InstallVolume->Info.DriveLetter,
                                          &pSetupData->USetupData.DestinationRootPath);
 #else
-                        StringCchPrintfW(CurrentItemText, ARRAYSIZE(CurrentItemText),
+                        StringCchPrintfW(szText, _countof(szText),
                                          L"%c: \x2014 Harddisk %lu, Partition %lu",
                                          InstallVolume->Info.DriveLetter,
                                          InstallPartition->DiskEntry->DiskNumber,
@@ -1157,22 +1247,34 @@ SummaryDlgProc(
                     else
                     {
 #if 0
-                        StringCchPrintfW(CurrentItemText, ARRAYSIZE(CurrentItemText),
+                        StringCchPrintfW(szText, _countof(szText),
                                          L"%wZ",
                                          &pSetupData->USetupData.DestinationRootPath);
 #else
-                        StringCchPrintfW(CurrentItemText, ARRAYSIZE(CurrentItemText),
+                        StringCchPrintfW(szText, _countof(szText),
                                          L"Harddisk %lu, Partition %lu",
                                          InstallPartition->DiskEntry->DiskNumber,
                                          InstallPartition->OnDiskPartitionNumber);
 #endif
                     }
-                    SetDlgItemTextW(hwndDlg, IDC_DESTDRIVE, CurrentItemText);
+                    StringCchPrintfW(CurrentItemText, _countof(CurrentItemText),
+                                     L"%s\r\n\r\n", szText);
+                    AppendTextToEditCtrl(hEditSummary, CurrentItemText);
+////////
 
-                    SetDlgItemTextW(hwndDlg, IDC_PATH,
-                                    pSetupData->USetupData.InstallationDirectory
-                                    /*pSetupData->USetupData.InstallPath.Buffer*/);
+////////
+                    LoadStringW(pSetupData->hInstance, IDS_PATH,
+                                szText, _countof(szText));
+                    StringCchPrintfW(CurrentItemText, _countof(CurrentItemText),
+                                     L"%s\r\n\t", szText);
+                    AppendTextToEditCtrl(hEditSummary, CurrentItemText);
 
+                    StringCchPrintfW(CurrentItemText, _countof(CurrentItemText),
+                                     L"%s\r\n\r\n",
+                                     pSetupData->USetupData.InstallationDirectory
+                                     /*pSetupData->USetupData.InstallPath.Buffer*/);
+                    AppendTextToEditCtrl(hEditSummary, CurrentItemText);
+////////
 
                     /* Change the "Next" button text to "Install" */
                     // PropSheet_SetNextText(GetParent(hwndDlg), ...);
@@ -3131,6 +3233,7 @@ _tWinMain(HINSTANCE hInst,
         psp.pszTemplate = MAKEINTRESOURCEW(IDD_STARTPAGE);
         ahpsp[nPages++] = CreatePropertySheetPage(&psp);
 
+#if 0
         /* Create the install type selection page */
         psp.dwSize = sizeof(PROPSHEETPAGE);
         psp.dwFlags = PSP_DEFAULT | PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
@@ -3142,7 +3245,6 @@ _tWinMain(HINSTANCE hInst,
         psp.pszTemplate = MAKEINTRESOURCEW(IDD_TYPEPAGE);
         ahpsp[nPages++] = CreatePropertySheetPage(&psp);
 
-#if 1
         /* Create the upgrade/repair selection page */
         psp.dwSize = sizeof(PROPSHEETPAGE);
         psp.dwFlags = PSP_DEFAULT | PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
@@ -3175,6 +3277,7 @@ _tWinMain(HINSTANCE hInst,
         psp.pfnDlgProc = DriveDlgProc;
         psp.pszTemplate = MAKEINTRESOURCEW(IDD_DRIVEPAGE);
         ahpsp[nPages++] = CreatePropertySheetPage(&psp);
+#endif
 
         /* Create the summary page */
         psp.dwSize = sizeof(PROPSHEETPAGE);
@@ -3186,10 +3289,9 @@ _tWinMain(HINSTANCE hInst,
         psp.pfnDlgProc = SummaryDlgProc;
         psp.pszTemplate = MAKEINTRESOURCEW(IDD_SUMMARYPAGE);
         ahpsp[nPages++] = CreatePropertySheetPage(&psp);
-#endif
     }
 
-#if 1
+#if 0
     /* Create the installation progress page */
     psp.dwSize = sizeof(PROPSHEETPAGE);
     psp.dwFlags = PSP_DEFAULT | PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
